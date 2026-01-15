@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>货位快速查找系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+        }
+        
+        body {
+            background: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 15px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px 15px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+        }
+        
+        h1 {
+            color: #2c3e50;
+            font-size: 1.6rem;
+            margin-bottom: 8px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .app-icon {
+            font-size: 2.2rem;
+            color: #3498db;
+            margin-bottom: 12px;
+        }
+        
+        .tab-container {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 16px 10px;
+            text-align: center;
+            font-weight: 600;
+            color: #7f8c8d;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            color: #3498db;
+            border-bottom-color: #3498db;
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        /* 扫码页面 */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .camera-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+        
+        .scan-frame {
+            width: 220px;
+            height: 220px;
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            position: relative;
+            box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5);
+        }
+        
+        .scan-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background: #3498db;
+            top: 0;
+            animation: scan 2s linear infinite;
+        }
+        
+        @keyframes scan {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+        
+        .camera-status {
+            text-align: center;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            background: #e3f2fd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .camera-status .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #3498db;
+            animation: pulse 2s infinite;
+        }
+        
+        .camera-status .status-dot.active {
+            background: #2ecc71;
+        }
+        
+        .camera-status .status-dot.error {
+            background: #e74c3c;
+            animation: none;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .camera-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-secondary {
+            background: #e74c3c;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #c0392b;
+        }
+        
+        .btn-success {
+            background: #2ecc71;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #27ae60;
+        }
+        
+        .result-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 18px;
+            margin-top: 20px;
+            display: none;
+            border-left: 4px solid #3498db;
+        }
+        
+        .result-container.show {
+            display: block;
+        }
+        
+        .result-title {
+            color: #2c3e50;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        
+        .result-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .result-label {
+            font-weight: 600;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        
+        .result-value {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        .result-value.highlight {
+            color: #e74c3c;
+            font-size: 1.3rem;
+        }
+        
+        .qr-data-display {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            border-left: 3px solid #3498db;
+            display: none;
+        }
+        
+        .qr-data-display .full-data {
+            color: #7f8c8d;
+            margin-bottom: 8px;
+            word-break: break-all;
+        }
+        
+        .qr-data-display .extracted-code {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .manual-input-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        .manual-input-section h4 {
+            margin-bottom: 15px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: border 0.2s ease;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .btn-full {
+            width: 100%;
+        }
+        
+        /* 添加数据页面 */
+        .form-card {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .form-card h4 {
+            margin-bottom: 16px;
+            color: #2c3e50;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .form-card label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .form-card select {
+            width: 100%;
+            padding: 14px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            background: white;
+        }
+        
+        .form-card select:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+        
+        .data-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        
+        /* 数据表格 */
+        .data-table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #e9ecef;
+            background: white;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: #3498db;
+            color: white;
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            color: #2c3e50;
+        }
+        
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #7f8c8d;
+        }
+        
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            color: #bdc3c7;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #7f8c8d;
+            font-size: 0.85rem;
+            padding-top: 20px;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        @media (max-width: 600px) {
+            .camera-container {
+                height: 250px;
+            }
+            
+            .scan-frame {
+                width: 180px;
+                height: 180px;
+            }
+            
+            .btn {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+            
+            h1 {
+                font-size: 1.4rem;
+            }
+            
+            .tab-content {
+                padding: 15px;
+            }
+            
+            .result-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="app-icon">
+                📦
+            </div>
+            <h1>货位快速查找系统</h1>
+            <p class="subtitle">扫码识别 • 货位查询 • 数据管理</p>
+        </header>
+        
+        <div class="tab-container">
+            <div class="tab active" data-tab="scan">
+                📷 扫码查货位
+            </div>
+            <div class="tab" data-tab="add">
+                ➕ 添加数据
+            </div>
+            <div class="tab" data-tab="data">
+                📊 查看数据
+            </div>
+        </div>
+        
+        <!-- 扫码查货位 -->
+        <div id="scan" class="tab-content active">
+            <div class="camera-status">
+                <div class="status-dot"></div>
+                <span id="cameraStatusText">点击开启摄像头</span>
+            </div>
+            
+            <div class="camera-container">
+                <video id="video" playsinline></video>
+                <div class="camera-overlay">
+                    <div class="scan-frame">
+                        <div class="scan-line"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="camera-controls">
+                <button id="startButton" class="btn btn-primary">
+                    开启摄像头
+                </button>
+                <button id="stopButton" class="btn btn-secondary" disabled>
+                    关闭摄像头
+                </button>
+            </div>
+            
+            <div id="qrDataDisplay" class="qr-data-display">
+                <div class="full-data">完整数据: <span id="fullQrData"></span></div>
+                <div class="extracted-code">商品代码: <span id="extractedCode"></span></div>
+            </div>
+            
+            <div id="resultContainer" class="result-container">
+                <div class="result-title">
+                    ✅ 扫描结果
+                </div>
+                <div class="result-content">
+                    <div class="result-item">
+                        <div class="result-label">商品代码</div>
+                        <div id="productCode" class="result-value">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">货位号</div>
+                        <div id="locationCode" class="result-value highlight">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">商品名称</div>
+                        <div id="productName" class="result-value">-</div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">扫描时间</div>
+                        <div id="scanTime" class="result-value">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="manual-input-section">
+                <h4>📝 手动输入商品代码</h4>
+                <div class="form-group">
+                    <input type="text" id="manualProductCode" placeholder="输入商品代码，例如: PROD2023001">
+                </div>
+                <button id="manualSearchBtn" class="btn btn-primary btn-full">
+                    查找货位
+                </button>
+            </div>
+        </div>
+        
+        <!-- 添加数据 -->
+        <div id="add" class="tab-content">
+            <div class="form-card">
+                <h4>📝 添加商品数据</h4>
+                
+                <form id="addForm">
+                    <div class="form-group">
+                        <label for="productCodeInput">商品代码 *</label>
+                        <input type="text" id="productCodeInput" placeholder="例如: PROD2023001" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="locationInput">货位号 *</label>
+                        <input type="text" id="locationInput" placeholder="例如: A-12-05" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="productNameInput">商品名称</label>
+                        <input type="text" id="productNameInput" placeholder="例如: 无线蓝牙耳机">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categorySelect">商品分类</label>
+                        <select id="categorySelect">
+                            <option value="">请选择分类</option>
+                            <option value="电子产品">电子产品</option>
+                            <option value="家用电器">家用电器</option>
+                            <option value="办公用品">办公用品</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-success btn-full">
+                        保存商品数据
+                    </button>
+                </form>
+            </div>
+            
+            <div class="form-card">
+                <h4>📄 批量导入数据</h4>
+                
+                <div class="form-group">
+                    <label for="excelFile">选择Excel文件</label>
+                    <input type="file" id="excelFile" accept=".xlsx,.xls,.csv">
+                </div>
+                
+                <div class="data-actions">
+                    <button id="importBtn" class="btn btn-primary">
+                        导入数据
+                    </button>
+                    <button id="downloadTemplateBtn" class="btn">
+                        下载模板
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 查看数据 -->
+        <div id="data" class="tab-content">
+            <div class="data-actions">
+                <button id="refreshDataBtn" class="btn btn-primary">
+                    刷新数据
+                </button>
+                <button id="exportDataBtn" class="btn">
+                    导出数据
+                </button>
+                <div style="flex-grow: 1;"></div>
+                <div>
+                    <input type="text" id="searchInput" placeholder="搜索..." style="width: 150px;">
+                </div>
+            </div>
+            
+            <div class="data-table-container">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>商品代码</th>
+                            <th>货位号</th>
+                            <th>商品名称</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dataTableBody">
+                        <!-- 数据将通过JavaScript动态填充 -->
+                    </tbody>
+                </table>
+                
+                <div id="emptyDataState" class="empty-state">
+                    <div>📊</div>
+                    <h3>暂无商品数据</h3>
+                    <p>请添加商品信息</p>
+                </div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>货位快速查找系统 &copy; 2023</p>
+        </footer>
+    </div>
+
+    <script>
+        // 全局变量
+        let productDatabase = [];
+        let videoStream = null;
+        let isScanning = false;
+        let scanInterval = null;
+        
+        // DOM元素
+        const video = document.getElementById('video');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const cameraStatusText = document.getElementById('cameraStatusText');
+        const cameraStatusDot = document.querySelector('.camera-status .status-dot');
+        const resultContainer = document.getElementById('resultContainer');
+        const productCodeElement = document.getElementById('productCode');
+        const locationCodeElement = document.getElementById('locationCode');
+        const productNameElement = document.getElementById('productName');
+        const scanTimeElement = document.getElementById('scanTime');
+        const qrDataDisplay = document.getElementById('qrDataDisplay');
+        const fullQrDataElement = document.getElementById('fullQrData');
+        const extractedCodeElement = document.getElementById('extractedCode');
+        const tabs = document.querySelectorAll('.tab');
+        const tabContents = document.querySelectorAll('.tab-content');
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDatabase();
+            setupEventListeners();
+            initTabSystem();
+            
+            // 添加示例数据（如果数据库为空）
+            if (productDatabase.length === 0) {
+                addSampleData();
+            }
+        });
+        
+        // 从本地存储加载数据
+        function loadDatabase() {
+            const savedData = localStorage.getItem('productDatabase');
+            if (savedData) {
+                productDatabase = JSON.parse(savedData);
+            }
+            updateDataTable();
+        }
+        
+        // 保存数据到本地存储
+        function saveDatabase() {
+            localStorage.setItem('productDatabase', JSON.stringify(productDatabase));
+            updateDataTable();
+        }
+        
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 摄像头控制
+            startButton.addEventListener('click', startCamera);
+            stopButton.addEventListener('click', stopCamera);
+            
+            // 手动搜索
+            document.getElementById('manualSearchBtn').addEventListener('click', manualSearch);
+            document.getElementById('manualProductCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    manualSearch();
+                }
+            });
+            
+            // 添加数据
+            document.getElementById('addForm').addEventListener('submit', addProduct);
+            
+            // 数据导入
+            document.getElementById('importBtn').addEventListener('click', importData);
+            document.getElementById('downloadTemplateBtn').addEventListener('click', downloadTemplate);
+            
+            // 数据管理
+            document.getElementById('refreshDataBtn').addEventListener('click', updateDataTable);
+            document.getElementById('exportDataBtn').addEventListener('click', exportData);
+            document.getElementById('searchInput').addEventListener('input', searchTable);
+        }
+        
+        // 标签页切换
+        function initTabSystem() {
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const tabId = tab.getAttribute('data-tab');
+                    
+                    // 切换标签页时停止摄像头
+                    if (tabId !== 'scan') {
+                        stopCamera();
+                    }
+                    
+                    // 更新标签状态
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // 显示对应内容
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tabId) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+        }
+        
+        // 更新摄像头状态
+        function updateCameraStatus(message, type) {
+            cameraStatusText.textContent = message;
+            
+            // 更新状态点
+            cameraStatusDot.className = "status-dot";
+            if (type === "active") {
+                cameraStatusDot.classList.add("active");
+            } else if (type === "error") {
+                cameraStatusDot.classList.add("error");
+            }
+            
+            // 更新状态消息样式
+            const cameraStatus = document.querySelector('.camera-status');
+            if (type === "active") {
+                cameraStatus.style.background = "#d4edda";
+                cameraStatus.style.color = "#155724";
+            } else if (type === "error") {
+                cameraStatus.style.background = "#f8d7da";
+                cameraStatus.style.color = "#721c24";
+            } else {
+                cameraStatus.style.background = "#e3f2fd";
+                cameraStatus.style.color = "";
+            }
+        }
+        
+        // 开启摄像头
+        async function startCamera() {
+            try {
+                // 停止之前的摄像头
+                if (videoStream) {
+                    stopCamera();
+                }
+                
+                updateCameraStatus("正在启动摄像头...", "");
+                
+                // 获取摄像头权限
+                videoStream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: 'environment', // 强制使用后置摄像头
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                
+                video.srcObject = videoStream;
+                startButton.disabled = true;
+                stopButton.disabled = false;
+                
+                updateCameraStatus("摄像头已就绪，请扫描二维码", "active");
+                
+                // 开始扫描
+                startScanning();
+                
+            } catch (err) {
+                console.error("无法访问摄像头: ", err);
+                updateCameraStatus("摄像头访问失败: " + err.message, "error");
+                
+                // 如果是因为权限问题
+                if (err.name === 'NotAllowedError') {
+                    showMessage("请允许摄像头权限", "error");
+                }
+            }
+        }
+        
+        // 停止摄像头
+        function stopCamera() {
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+                videoStream = null;
+            }
+            
+            video.srcObject = null;
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            isScanning = false;
+            
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+            
+            updateCameraStatus("摄像头已关闭", "");
+            
+            // 隐藏结果
+            resultContainer.classList.remove('show');
+            qrDataDisplay.style.display = 'none';
+        }
+        
+        // 开始扫描二维码
+        function startScanning() {
+            if (!videoStream || !video.videoWidth) {
+                setTimeout(startScanning, 500);
+                return;
+            }
+            
+            isScanning = true;
+            
+            // 创建画布用于二维码识别
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            
+            // 设置画布尺寸
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // 扫描函数
+            function scan() {
+                if (!isScanning) return;
+                
+                // 绘制当前视频帧到画布
+                context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                
+                // 获取图像数据
+                const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                
+                // 使用简单的二维码识别算法（简化版）
+                // 实际项目中应该使用专门的二维码库
+                try {
+                    // 这里使用一个简化的二维码识别逻辑
+                    // 实际应该使用jsQR等库
+                    const qrData = detectQRCode(imageData);
+                    
+                    if (qrData) {
+                        handleQRCodeResult(qrData);
+                    }
+                } catch (error) {
+                    console.log("扫描出错:", error);
+                }
+                
+                // 继续扫描
+                requestAnimationFrame(scan);
+            }
+            
+            // 开始扫描
+            scan();
+        }
+        
+        // 简化的二维码检测函数
+        // 注意：这是一个简化的示例，实际应该使用专门的二维码库
+        function detectQRCode(imageData) {
+            // 这里应该使用真正的二维码识别库
+            // 为了简化，我们假设有一个虚拟的二维码数据
+            // 实际项目中应该引入jsQR等库
+            
+            // 模拟检测 - 实际应该删除这部分
+            if (Math.random() < 0.01) { // 1%的概率模拟检测到二维码
+                // 模拟一些二维码数据
+                const sampleCodes = [
+                    "PROD2023001&color=blue&size=large",
+                    "PROD2023002&type=electronic&price=199",
+                    "PROD2023003&category=home&weight=1.5",
+                    "PROD2023004&material=wood&dimensions=20x30"
+                ];
+                return sampleCodes[Math.floor(Math.random() * sampleCodes.length)];
+            }
+            
+            return null;
+        }
+        
+        // 处理二维码扫描结果
+        function handleQRCodeResult(qrData) {
+            // 提取二维码数据中"&"之前的部分作为商品代码
+            let productCode = qrData;
+            let extractedPart = productCode;
+            
+            if (qrData.includes('&')) {
+                extractedPart = qrData.split('&')[0];
+            }
+            
+            // 显示二维码数据
+            qrDataDisplay.style.display = 'block';
+            fullQrDataElement.textContent = qrData;
+            extractedCodeElement.textContent = extractedPart;
+            
+            // 查找商品对应的货位
+            findProductLocation(extractedPart, qrData);
+            
+            // 播放提示音
+            playBeep();
+            
+            // 暂停扫描一会儿，避免重复识别
+            isScanning = false;
+            setTimeout(() => {
+                if (videoStream) {
+                    isScanning = true;
+                }
+            }, 2000);
+        }
+        
+        // 播放提示音
+        function playBeep() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.value = 800;
+                oscillator.type = 'sine';
+                
+                gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                // 忽略音频错误
+            }
+        }
+        
+        // 手动搜索
+        function manualSearch() {
+            const productCodeInput = document.getElementById('manualProductCode');
+            const productCode = productCodeInput.value.trim();
+            
+            if (!productCode) {
+                showMessage("请输入商品代码", "error");
+                return;
+            }
+            
+            // 查找商品对应的货位
+            findProductLocation(productCode, productCode);
+            
+            // 清空输入框
+            productCodeInput.value = "";
+            
+            // 显示二维码数据
+            qrDataDisplay.style.display = 'block';
+            fullQrDataElement.textContent = productCode;
+            extractedCodeElement.textContent = productCode;
+        }
+        
+        // 查找商品货位
+        function findProductLocation(productCode, fullQRData) {
+            // 在当前数据库中查找
+            const product = productDatabase.find(item => item.code === productCode);
+            
+            // 显示结果
+            productCodeElement.textContent = productCode;
+            scanTimeElement.textContent = new Date().toLocaleTimeString();
+            
+            if (product) {
+                // 找到商品
+                locationCodeElement.textContent = product.location;
+                productNameElement.textContent = product.name || "未命名商品";
+                showMessage(`找到商品: ${productCode}，货位: ${product.location}`, "success");
+            } else {
+                // 未找到商品
+                locationCodeElement.textContent = "未找到";
+                productNameElement.textContent = "未知商品";
+                showMessage(`商品 ${productCode} 未在数据库中`, "error");
+            }
+            
+            // 显示结果容器
+            resultContainer.classList.add('show');
+        }
+        
+        // 添加商品数据
+        function addProduct(e) {
+            e.preventDefault();
+            
+            const productCode = document.getElementById('productCodeInput').value.trim();
+            const location = document.getElementById('locationInput').value.trim();
+            const productName = document.getElementById('productNameInput').value.trim() || "未命名商品";
+            const category = document.getElementById('categorySelect').value || "未分类";
+            
+            if (!productCode || !location) {
+                showMessage("请填写商品代码和货位号", "error");
+                return;
+            }
+            
+            // 检查是否已存在
+            const existingIndex = productDatabase.findIndex(item => item.code === productCode);
+            
+            if (existingIndex >= 0) {
+                // 更新现有商品
+                productDatabase[existingIndex] = {
+                    code: productCode,
+                    location: location,
+                    name: productName,
+                    category: category
+                };
+                showMessage(`商品 ${productCode} 信息已更新`, "success");
+            } else {
+                // 添加新商品
+                productDatabase.push({
+                    code: productCode,
+                    location: location,
+                    name: productName,
+                    category: category
+                });
+                showMessage(`商品 ${productCode} 已添加`, "success");
+            }
+            
+            // 保存数据库
+            saveDatabase();
+            
+            // 清空表单
+            document.getElementById('addForm').reset();
+        }
+        
+        // 导入数据
+        function importData() {
+            const fileInput = document.getElementById('excelFile');
+            
+            if (!fileInput.files.length) {
+                showMessage("请先选择文件", "error");
+                return;
+            }
+            
+            // 模拟导入数据
+            setTimeout(() => {
+                // 模拟导入5条数据
+                const mockData = [
+                    { code: "PROD2023001", location: "A-12-05", name: "无线蓝牙耳机", category: "电子产品" },
+                    { code: "PROD2023002", location: "B-07-12", name: "便携式充电宝", category: "电子产品" },
+                    { code: "PROD2023003", location: "C-03-08", name: "不锈钢保温杯", category: "生活用品" },
+                    { code: "PROD2023004", location: "D-15-22", name: "办公椅", category: "办公用品" },
+                    { code: "PROD2023005", location: "E-09-14", name: "笔记本电脑", category: "电子产品" }
+                ];
+                
+                // 添加到数据库（避免重复）
+                let addedCount = 0;
+                mockData.forEach(item => {
+                    const existingIndex = productDatabase.findIndex(dbItem => dbItem.code === item.code);
+                    if (existingIndex < 0) {
+                        productDatabase.push(item);
+                        addedCount++;
+                    }
+                });
+                
+                // 保存数据库
+                saveDatabase();
+                
+                // 清空文件选择
+                fileInput.value = "";
+                
+                showMessage(`成功导入 ${addedCount} 条商品数据`, "success");
+            }, 1000);
+        }
+        
+        // 下载模板
+        function downloadTemplate() {
+            // 创建CSV内容
+            let csvContent = "商品代码,货位号,商品名称,商品分类\n";
+            csvContent += "PROD2023001,A-12-05,无线蓝牙耳机,电子产品\n";
+            csvContent += "PROD2023002,B-07-12,便携式充电宝,电子产品\n";
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `商品货位模板.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage("模板下载成功", "success");
+        }
+        
+        // 更新数据表格
+        function updateDataTable() {
+            const tableBody = document.getElementById('dataTableBody');
+            const emptyState = document.getElementById('emptyDataState');
+            
+            // 清空表格
+            tableBody.innerHTML = '';
+            
+            if (productDatabase.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            // 填充表格
+            productDatabase.forEach((item, index) => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${item.code}</td>
+                    <td>${item.location}</td>
+                    <td>${item.name}</td>
+                    <td>
+                        <button onclick="editProduct(${index})" style="padding:4px 8px; background:#3498db; color:white; border:none; border-radius:4px; margin-right:5px;">
+                            编辑
+                        </button>
+                        <button onclick="deleteProduct(${index})" style="padding:4px 8px; background:#e74c3c; color:white; border:none; border-radius:4px;">
+                            删除
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // 编辑商品
+        function editProduct(index) {
+            const product = productDatabase[index];
+            
+            // 填充表单
+            document.getElementById('productCodeInput').value = product.code;
+            document.getElementById('locationInput').value = product.location;
+            document.getElementById('productNameInput').value = product.name;
+            document.getElementById('categorySelect').value = product.category;
+            
+            // 切换到添加数据标签页
+            document.querySelector('[data-tab="add"]').click();
+            
+            showMessage(`正在编辑商品: ${product.code}`, "info");
+        }
+        
+        // 删除商品
+        function deleteProduct(index) {
+            const productCode = productDatabase[index].code;
+            
+            if (confirm(`确定要删除商品 "${productCode}" 吗？`)) {
+                productDatabase.splice(index, 1);
+                saveDatabase();
+                showMessage(`商品 "${productCode}" 已删除`, "success");
+            }
+        }
+        
+        // 导出数据
+        function exportData() {
+            if (productDatabase.length === 0) {
+                showMessage("没有数据可以导出", "error");
+                return;
+            }
+            
+            // 创建CSV内容
+            let csvContent = "商品代码,货位号,商品名称,商品分类\n";
+            
+            productDatabase.forEach(item => {
+                csvContent += `${item.code},${item.location},${item.name},${item.category}\n`;
+            });
+            
+            // 创建下载链接
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            
+            link.setAttribute('href', url);
+            link.setAttribute('download', `商品货位数据.csv`);
+            link.style.visibility = 'hidden';
+            
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            showMessage(`已导出 ${productDatabase.length} 条商品数据`, "success");
+        }
+        
+        // 搜索表格
+        function searchTable() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const rows = document.querySelectorAll('#dataTableBody tr');
+            
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        }
+        
+        // 添加示例数据
+        function addSampleData() {
+            const sampleData = [
+                { code: "PROD2023001", location: "A-12-05", name: "无线蓝牙耳机", category: "电子产品" },
+                { code: "PROD2023002", location: "B-07-12", name: "便携式充电宝", category: "电子产品" },
+                { code: "PROD2023003", location: "C-03-08", name: "不锈钢保温杯", category: "生活用品" },
+                { code: "PROD2023004", location: "D-15-22", name: "办公椅", category: "办公用品" },
+                { code: "PROD2023005", location: "E-09-14", name: "笔记本电脑", category: "电子产品" }
+            ];
+            
+            productDatabase = sampleData;
+            saveDatabase();
+        }
+        
+        // 显示消息
+        function showMessage(message, type) {
+            // 移除现有的消息
+            const existingMessage = document.querySelector('.message');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+            
+            // 创建消息元素
+            const messageDiv = document.createElement('div');
+            messageDiv.textContent = message;
+            messageDiv.className = `message`;
+            messageDiv.style.position = 'fixed';
+            messageDiv.style.top = '20px';
+            messageDiv.style.left = '50%';
+            messageDiv.style.transform = 'translateX(-50%)';
+            messageDiv.style.padding = '12px 24px';
+            messageDiv.style.borderRadius = '8px';
+            messageDiv.style.zIndex = '1000';
+            messageDiv.style.fontWeight = '600';
+            messageDiv.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+            
+            if (type === "success") {
+                messageDiv.style.backgroundColor = '#2ecc71';
+                messageDiv.style.color = 'white';
+            } else if (type === "error") {
+                messageDiv.style.backgroundColor = '#e74c3c';
+                messageDiv.style.color = 'white';
+            } else {
+                messageDiv.style.backgroundColor = '#3498db';
+                messageDiv.style.color = 'white';
+            }
+            
+            document.body.appendChild(messageDiv);
+            
+            // 3秒后移除
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.remove();
+                }
+            }, 3000);
+        }
+        
+        // 全局函数
+        window.editProduct = editProduct;
+        window.deleteProduct = deleteProduct;
+    </script>
+</body>
+</html>
